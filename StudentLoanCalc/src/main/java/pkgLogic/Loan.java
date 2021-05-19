@@ -31,7 +31,12 @@ public class Loan {
 
 		double RemainingBalance = LoanAmount;
 		int PaymentCnt = 1;
-		while (RemainingBalance >= this.GetPMT()) {
+		int num_iter = 0;
+		while (RemainingBalance >= this.GetPMT() && num_iter<=1000) {
+			num_iter += 1;
+			System.out.println(RemainingBalance);
+			System.out.println("PMT");
+			System.out.println(this.GetPMT());
 			Payment payment = new Payment(RemainingBalance, PaymentCnt++, startDate, this, false);
 			RemainingBalance = payment.getEndingBalance();
 			startDate = startDate.plusMonths(1);
@@ -48,7 +53,7 @@ public class Loan {
 		double P = this.getLoanAmount();
 		double r = this.getInterestRate()/12;
 		int n = this.getLoanPaymentCnt();
-		PMT = P*r/(1-Math.pow(1+r, n));
+		PMT = P*r/(1-Math.pow(1+r, -n));
 		return PMT;
 	}
 
