@@ -130,6 +130,8 @@ public class LoanCalcViewController implements Initializable {
 		cmbLoanType.getItems().addAll("Home", "Auto", "School");
 
 		// TODO: Default cmbLoanType to select 'Home' as the default loan type
+		// Done
+		cmbLoanType.getSelectionModel().select(0);
 
 		cmbLoanType.valueProperty().addListener(new ChangeListener<String>() {
 			@Override
@@ -190,6 +192,7 @@ public class LoanCalcViewController implements Initializable {
 	@FXML
 	private void btnClearResultsKeyPress(KeyEvent event) {
 		// TODO: Call the method to clear the results
+		
 	}
 
 	/**

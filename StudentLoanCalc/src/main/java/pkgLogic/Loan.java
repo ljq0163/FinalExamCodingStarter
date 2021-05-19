@@ -34,9 +34,9 @@ public class Loan {
 		int num_iter = 0;
 		while (RemainingBalance >= this.GetPMT() && num_iter<=1000) {
 			num_iter += 1;
-			System.out.println(RemainingBalance);
-			System.out.println("PMT");
-			System.out.println(this.GetPMT());
+			//System.out.println(RemainingBalance);
+			//System.out.println("PMT");
+			//System.out.println(this.GetPMT());
 			Payment payment = new Payment(RemainingBalance, PaymentCnt++, startDate, this, false);
 			RemainingBalance = payment.getEndingBalance();
 			startDate = startDate.plusMonths(1);
