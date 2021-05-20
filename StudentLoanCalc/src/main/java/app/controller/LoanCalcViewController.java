@@ -192,6 +192,7 @@ public class LoanCalcViewController implements Initializable {
 	@FXML
 	private void btnClearResultsKeyPress(KeyEvent event) {
 		// TODO: Call the method to clear the results
+		//btnClearFields((ActionEvent) event);
 		
 	}
 
@@ -208,31 +209,78 @@ public class LoanCalcViewController implements Initializable {
 		hbChart.getChildren().clear();
 
 		// TODO: Clear all the output labels (lblTotalPayemnts, lblTotalInterest, etc)
+		// Done
 		lblTotalPayemnts.setText("");
+		lblTotalInterest.setText("");
+		lblInterestSaved.setText("");
+		lblMonthlyPayment.setText("");
+		lblPaymentsSaved.setText("");
+		lblEscrow.setText("");
+
+		
 	}
 
 	private boolean ValidateData() {
 		// TODO: Only show one alert message. If there are three errors,
 		// show one Alert with all three errors.
 		// Hint: Use StringBuilder for the 'setContentText' message.
-
+		// Done
+		StringBuilder str = new StringBuilder();
+		Alert fail = new Alert(AlertType.ERROR);
+		fail.setHeaderText("Data Input Error");
+		boolean check1=false, check2=false, check3=false, check4=false, check5=false;
 		// Validate LoanAmount isn't empty
-		if (LoanAmount.getText().trim().isEmpty()) {
-			Alert fail = new Alert(AlertType.ERROR);
-			fail.setHeaderText("Missing Data");
-			fail.setContentText("Loan Amount is required");
+		// // TODO: Validate LoanAmount is a positive double
+		if (LoanAmount.getText().trim().isEmpty()|| !isDouble(LoanAmount.getText().trim()) || Double.parseDouble(LoanAmount.getText().trim())<=0) {			
+			str.append("Loan Amount should be a positive double. ");
+			check1=true;
+		}
+		// TODO: Validate InterestRate is not blank and is a positive double. Validate
+		// that the value is between 1 and 30 (2.99 = 2.99%, not 0.0299)
+		if (InterestRate.getText().trim().isEmpty()|| !isDouble(InterestRate.getText().trim()) || Double.parseDouble(InterestRate.getText().trim())<1 || Double.parseDouble(InterestRate.getText().trim())>30) {			
+			str.append("InterestRate should be a positive double: value between 1 and 30. ");
+			check2=true;
+		}
+		// TODO: Validate NbrOfYears is a non blank positive integer
+		if (NbrOfYears.getText().trim().isEmpty()|| !isInteger(NbrOfYears.getText().trim())) {			
+			str.append("NbrOfYears should be a positive integer. ");
+			check3=true;
+		}
+		// TODO: Validate AdditionalPayment, if given, is a positive double
+		if (!AdditionalPayment.getText().trim().isEmpty() && !isDouble(AdditionalPayment.getText().trim())) {			
+			str.append("AdditionalPayment, if given, is a positive double. ");
+			check4=true;
+		}
+		// TODO: Validate EscrowAmount, if given, is a positive double
+		if (!EscrowAmount.getText().trim().isEmpty() && !isDouble(EscrowAmount.getText().trim())) {			
+			str.append("AdditionalPayment, if given, is a positive double. ");
+			check5=true;
+		}	
+		
+		if (check1 || check2 || check3 || check4 || check5) {
+			fail.setContentText(str.toString());
 			fail.showAndWait();
 			return false;
 		}
-
-		// TODO: Validate LoanAmount is a positive double
-		// TODO: Validate InterestRate is not blank and is a positive double. Validate
-		// that the value is between 1 and 30 (2.99 = 2.99%, not 0.0299)
-		// TODO: Validate NbrOfYears is a non blank positive integer
-		// TODO: Validate AdditionalPayment, if given, is a positive double
-		// TODO: Validate EscrowAmount, if given, is a positive double
-
 		return true;
+	}
+	
+	public boolean isDouble(String value) {
+	    try {
+	        Double.parseDouble(value);
+	        return true;
+	    } catch (NumberFormatException e) {
+	        return false;
+	    }
+	}
+	
+	public boolean isInteger(String value) {
+	    try {
+	        Integer.parseInt(value);
+	        return true;
+	    } catch (NumberFormatException e) {
+	        return false;
+	    }
 	}
 
 	/**
@@ -245,6 +293,7 @@ public class LoanCalcViewController implements Initializable {
 	private void btnCalcLoan(ActionEvent event) {
 
 		// TODO: Call the method to Clear the Results
+		
 
 		// Validate the data. If the method returns 'false', exit the method
 		if (ValidateData() == false)
@@ -269,11 +318,10 @@ public class LoanCalcViewController implements Initializable {
 		NumberFormat fmtCurrency = NumberFormat.getCurrencyInstance(Locale.US);
 		lblTotalPayemnts.setText(fmtCurrency.format(loanExtra.getTotalPayments()));
 		// TODO: Set lblTotalInterest label with loanExtra's total interest payments
-
-		// TODO: Set lblTotalInterest label with loanExtra's PMT
-
-		// TODO: Set lblInterestSaved to the total interest saved
-
+		// Done
+		lblTotalInterest.setText(fmtCurrency.format(loanExtra.getTotalInterest()));
+		lblInterestSaved.setText(fmtCurrency.format(loanNoExtra.getTotalInterest()-loanExtra.getTotalInterest()));
+		lblMonthlyPayment.setText(fmtCurrency.format(loanExtra.GetPMT()));;
 		lblPaymentsSaved
 				.setText(String.valueOf(loanNoExtra.getLoanPayments().size() - loanExtra.getLoanPayments().size()));
 
