@@ -22,6 +22,7 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import javafx.fxml.Initializable;
@@ -117,12 +118,21 @@ public class LoanCalcViewController implements Initializable {
 
 	@FXML
 	private AnchorPane apAreaChart;
+	
+	@FXML
+	private AnchorPane sbChart;
 
 	@FXML
 	private AreaChart<Number, Number> areaChartAmortization = null;
 
 	@FXML
+	private StackedBarChart<String, Number> areaChartStack = null;
+	
+	@FXML
 	private HBox hbChart;
+	
+	@FXML
+	private HBox sbChartBox;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -163,8 +173,8 @@ public class LoanCalcViewController implements Initializable {
 		colBalance.setStyle("-fx-alignment: CENTER-RIGHT;");
 
 		tvResults.setItems(paymentList);
-
-		// PaintChart();
+		
+		//PaintChart();
 	}
 
 	public void setMainApp(StudentCalc sc) {
@@ -327,6 +337,10 @@ public class LoanCalcViewController implements Initializable {
 
 		XYChart.Series seriesExtra = new XYChart.Series();
 		XYChart.Series seriesNoExtra = new XYChart.Series();
+		XYChart.Series<String, Number> seriesP = new XYChart.Series();
+		XYChart.Series<String, Number> seriesI = new XYChart.Series();
+		seriesP.setName("Principle");
+		seriesI.setName("Interest");
 
 		int MaxLoanPayments;
 		if (loanExtra.getLoanPayments().size() >= loanNoExtra.getLoanPayments().size()) {
@@ -343,16 +357,54 @@ public class LoanCalcViewController implements Initializable {
 		}
 
 		CreateAreaChartAmortization(MaxLoanPayments, MaxLoanAmount);
+		//CreateAreaChartStack(MaxLoanAmount);
+		//System.out.println(areaChartAmortization.getData());
+		//System.out.println(areaChartStack.getData());
 
 		for (Payment p : loanExtra.getLoanPayments()) {
 			PlotData(seriesExtra, p.getPaymentNbr(), p.getEndingBalance());
 		}
-
+		
+		int month = 0;
+		double year_principle = 0;
+		double year_interest = 0;
+		int this_year = localDate.getYear();
+		double max_stack = 0;
 		for (Payment p : loanNoExtra.getLoanPayments()) {
+			year_principle += p.getPrinciple();
+			year_interest +=  p.getInterestPayment();
+			month += 1;
 			PlotData(seriesNoExtra, p.getPaymentNbr(), p.getEndingBalance());
+			if (month == 12) {
+				max_stack = Math.max(max_stack, year_principle);
+				max_stack = Math.max(max_stack, year_interest);
+				seriesP.getData().add(new XYChart.Data<>(this_year+"", year_principle));
+				seriesI.getData().add(new XYChart.Data<>(this_year+"", year_interest));
+				month = 0;
+				this_year += 1;
+				year_principle = 0;
+				year_interest = 0;
+			}
 		}
 
 		areaChartAmortization.getData().addAll(seriesExtra, seriesNoExtra);
+		
+		double tickAmount = (max_stack > 100000 ? 10000 : 1000);
+		NumberAxis yAxis = new NumberAxis(0, max_stack*1.2, tickAmount);
+		yAxis.setLabel("Amount");
+		ArrayList<String> axisArray = new ArrayList<>();
+		int this_year2 = localDate.getYear();
+		for (int i=0; i<MaxLoanPayments; i+=12) {
+			axisArray.add(this_year2+"");
+			this_year2 += 1;
+		}
+		//NumberAxis xAxis = new NumberAxis(localDate.getYear(), localDate.getYear()+MaxLoanPayments/12, 1);
+		CategoryAxis xAxis = new CategoryAxis();    
+	    xAxis.setCategories(FXCollections.<String>observableArrayList(axisArray)); 
+		xAxis.setLabel("Year");
+		areaChartStack = new StackedBarChart<>(xAxis, yAxis);  
+		areaChartStack.setTitle("Principle and interests distribution");
+		areaChartStack.getData().addAll(seriesP, seriesI);
 
 		for (final Series<Number, Number> series : areaChartAmortization.getData()) {
 			for (final Data<Number, Number> data : series.getData()) {
@@ -361,7 +413,17 @@ public class LoanCalcViewController implements Initializable {
 				Tooltip.install(data.getNode(), tooltip);
 			}
 		}
+		
+		for (final Series<String, Number> series : areaChartStack.getData()) {
+			for (final Data<String, Number> data : series.getData()) {
+				Tooltip tooltip = new Tooltip();
+				tooltip.setText(data.getYValue().toString());
+				Tooltip.install(data.getNode(), tooltip);
+			}
+		}
+		
 		hbChart.getChildren().add(areaChartAmortization);
+		sbChartBox.getChildren().add(areaChartStack);
 	}
 
 	/**
@@ -385,6 +447,23 @@ public class LoanCalcViewController implements Initializable {
 		areaChartAmortization.setTitle("Amortization Payment Chart");
 		areaChartAmortization.setLegendVisible(false);
 	}
+	
+	private void CreateAreaChartStack(double MaxAmount) {
+
+		double tickAmount = (MaxAmount > 100000 ? 10000 : 1000);
+
+		//final NumberAxis xAxis = new NumberAxis(1, MaxPayments, MaxPayments / 12);
+		final NumberAxis yAxis = new NumberAxis(0, MaxAmount, tickAmount);
+
+		yAxis.setLabel("Amount");		
+	    CategoryAxis xAxis = new CategoryAxis();    
+	    xAxis.setCategories(FXCollections.<String>observableArrayList(Arrays.asList("Principle", "Interest"))); 
+	    xAxis.setLabel("category");
+		//areaChartStack = new AreaChart<String, Number>(xAxis, yAxis);
+	    StackedBarChart<String, Number> areaChartStack = new StackedBarChart<>(xAxis, yAxis);  
+		areaChartStack.setTitle("Principle and interests distribution");
+		areaChartStack.setLegendVisible(false);
+	}
 
 	/**
 	 * PlotData - Plot a data point for a given series
@@ -397,7 +476,25 @@ public class LoanCalcViewController implements Initializable {
 	private void PlotData(XYChart.Series series, int PaymentNbr, double Balance) {
 		series.getData().add(new XYChart.Data(PaymentNbr, Balance));
 	}
-
+	/**
+	private void StackedBarChart() {
+	      //Defining the axes               
+	      NumberAxis xAxis = new NumberAxis();    
+	      xAxis.setLabel("Years");
+	      NumberAxis yAxis = new NumberAxis(); 
+	      yAxis.setLabel("Amount");    
+	         
+	      //Creating the Bar chart
+	      StackedBarChart<Number, Number> stackedBarChart = 
+	         new StackedBarChart<>(xAxis, yAxis);         
+	      stackedBarChart.setTitle("Principle and interest stacked bar chart"); 
+	      stackedBarChart.setTitle("Stacked Bar Chart");
+	      
+	      
+	      
+	}
+	*/
+	
 	private void PaintChart() {
 		final NumberAxis xAxis = new NumberAxis(1, 360, 10);
 		final NumberAxis yAxis = new NumberAxis(0, 300000, 20000);
